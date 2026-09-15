@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thindi Katte Break-Even Planner</title>
+
+  <style>
+    :root{
+      --bg:#f6f7f9;
+      --panel:#ffffff;
+      --card:#ffffff;
+      --text:#172033;
+      --muted:#6b7280;
+      --border:#d9dee7;
+      --accent:#0f766e;
+      --accent-soft:#dff5f2;
+      --series2:#2563eb;
+      --series3:#dc2626;
+      --good:#15803d;
+      --bad:#b91c1c;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+    body{overflow-x:hidden}
+    .wrap{
+      max-width:1540px;
+      margin:0 auto;
+      padding:10px 14px 12px;
+    }
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    }
+    h1{margin:0;font-size:clamp(1.2rem,1.65vw,1.7rem);line-height:1.1}
+    h2{margin:0 0 7px;font-size:.96rem;line-height:1.15}
+    p{margin:2px 0;color:var(--muted);font-size:.76rem}
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,1.12fr) minmax(390px,.88fr);
+      gap:10px;
+      align-items:start;
+    }
+    .stack{display:grid;gap:10px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      box-shadow:0 1px 5px rgba(0,0,0,.025);
+      min-width:0;
+    }
+    .right{position:static}
+    .grid2{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:7px 10px;
+    }
+    label{
+      display:grid;
+      gap:3px;
+      font-size:.72rem;
+      color:var(--text);
+      min-width:0;
+    }
+    input[type="number"]{
+      width:100%;
+      min-width:0;
+      border:1px solid var(--border);
+      border-radius:7px;
+      padding:6px 8px;
+      background:#fff;
+      color:var(--text);
+      font-size:14px;
+      line-height:1.1;
+      outline:none;
+      height:32px;
+    }
+    input[type="number"]:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 2px var(--accent-soft);
+    }
+    button{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      border-radius:8px;
+      padding:7px 10px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:.78rem;
+    }
+    button:hover{background:#f8fafc}
+    .table-wrap{overflow-x:auto}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:650px;
+      table-layout:fixed;
+    }
+    th,td{
+      border-bottom:1px solid var(--border);
+      padding:4px 6px;
+      text-align:left;
+      vertical-align:middle;
+    }
+    th{
+      color:var(--muted);
+      font-size:.68rem;
+      font-weight:700;
+      height:26px;
+    }
+    td{font-size:.73rem;height:31px}
+    td:first-child,th:first-child{width:43%}
+    td input{padding:4px 7px!important;height:28px!important;font-size:13px!important}
+    .money,.num{font-variant-numeric:tabular-nums}
+    .metrics{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:7px;
+    }
+    .metric{
+      border:1px solid var(--border);
+      border-radius:9px;
+      background:#fafbfc;
+      padding:8px;
+      min-width:0;
+    }
+    .metric .label{
+      color:var(--muted);
+      font-size:.66rem;
+      margin-bottom:2px;
+      line-height:1.15;
+    }
+    .metric .value{
+      font-size:.95rem;
+      font-weight:750;
+      line-height:1.1;
+      white-space:nowrap;
+    }
+    .topline{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .badge{
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:4px 7px;
+      font-size:.66rem;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .badge.good{color:var(--good);background:#ecfdf3;border-color:#bbf7d0}
+    .badge.bad{color:var(--bad);background:#fef2f2;border-color:#fecaca}
+    .progress{
+      height:6px;
+      border-radius:999px;
+      background:#e5e7eb;
+      overflow:hidden;
+      margin-top:4px;
+    }
+    .progress span{
+      display:block;
+      height:100%;
+      background:var(--accent);
+      width:0%;
+      transition:width .2s ease;
+    }
+    .small{font-size:.69rem;color:var(--muted);line-height:1.25}
+    .targets{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px 12px;
+    }
+    .target .k{color:var(--muted);font-size:.66rem;line-height:1.15}
+    .target .v{font-weight:700;margin-top:1px;font-size:.82rem}
+    svg{width:100%;height:auto;max-height:225px;display:block}
+    .gridline{stroke:#e5e7eb;stroke-width:1}
+    .axistext{fill:#6b7280;font-size:10px}
+    .revline{stroke:var(--series2);stroke-width:3;fill:none}
+    .costline{stroke:var(--series3);stroke-width:3;fill:none}
+    .beline{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 5}
+    .dot{fill:var(--accent)}
+    .legend{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      font-size:.68rem;
+      color:var(--muted);
+      margin-top:3px;
+    }
+    .legend span::before{content:"●";margin-right:4px}
+    .legend .rev::before{color:var(--series2)}
+    .legend .cost::before{color:var(--series3)}
+    .legend .be::before{content:"┆";color:var(--accent)}
+    .note{
+      padding:7px 9px;
+      border-radius:8px;
+      background:#fffbeb;
+      border:1px solid #fde68a;
+      color:#92400e;
+      font-size:.65rem;
+      line-height:1.25;
+      margin-top:7px;
+    }
+
+    /* Typical desktop/laptop: compact two-column dashboard with no page scroll at common 768px+ heights. */
+    @media (min-width:1001px) and (min-height:700px){
+      html,body{height:100%;overflow:hidden}
+      .wrap{height:100%;display:flex;flex-direction:column}
+      .layout{flex:1;min-height:0}
+      .stack{min-height:0}
+      .card{overflow:hidden}
+    }
+
+    /* Medium desktop: stay two columns, allow page scroll only if the viewport is unusually short. */
+    @media(max-width:1000px){
+      .layout{grid-template-columns:1fr}
+      .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .right{position:static}
+      svg{max-height:none}
+    }
+
+    /* Phone: every section is stacked one below the other. */
+    @media(max-width:620px){
+      body{overflow:auto}
+      .wrap{padding:8px}
+      header{align-items:flex-start;margin-bottom:8px}
+      header button{width:100%}
+      .layout,.stack{display:grid;grid-template-columns:1fr}
+      .grid2,.metrics,.targets{grid-template-columns:1fr}
+      .card{padding:11px}
+      .table-wrap{overflow-x:auto}
+      table{min-width:620px}
+      h1{font-size:1.25rem}
+      h2{font-size:1rem}
+      p,.small{font-size:.78rem}
+      label{font-size:.8rem}
+      input[type="number"]{font-size:16px;height:38px}
+      td{font-size:.78rem;height:36px}
+      td input{font-size:16px!important;height:34px!important}
+      .metric .value{font-size:1.05rem}
+      .target .v{font-size:.9rem}
+      svg{max-height:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Thindi Katte Break-Even Planner</h1>
+        <p>All financial calculations are monthly. Enter expected item sales per operating day; the planner converts them to monthly totals.</p>
+      </div>
+      <button id="resetBtn" type="button">Reset defaults</button>
+    </header>
+
+    <main class="layout">
+      <section class="stack">
+        <div class="card">
+          <h2>Monthly configuration & expenses</h2>
+          <div class="grid2">
+            <label>Truck rent / month
+              <input id="truckRent" type="number" min="0" step="50" value="2500">
+            </label>
+            <label>Space rent / month
+              <input id="spaceRent" type="number" min="0" step="50" value="2500">
+            </label>
+            <label>Commercial kitchen / month
+              <input id="kitchen" type="number" min="0" step="25" value="500">
+            </label>
+            <label>Other fixed expenses / month
+              <input id="other" type="number" min="0" step="50" value="1000">
+            </label>
+            <label>Number of workers
+              <input id="workers" type="number" min="0" step="1" value="2">
+            </label>
+            <label>Hourly wage
+              <input id="wage" type="number" min="0" step="0.25" value="10">
+            </label>
+            <label>Hours per operating day
+              <input id="hours" type="number" min="0.1" step="0.5" value="4">
+            </label>
+            <label>Operating days per week
+              <input id="daysWeek" type="number" min="0.1" max="7" step="0.5" value="6">
+            </label>
+          </div>
+          <div class="note">
+            Payroll taxes, card-processing fees, sales tax, insurance, permits, fuel/propane, maintenance, and delivery-app commissions are not separately modeled unless you include them in “Other fixed expenses” or per-item cost.
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Menu, price, cost, and daily quantity sold</h2>
+          <p class="small">These are your current default menu prices, estimated food + packaging costs, and expected sales per operating day. Change any value to recalculate instantly.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Menu item</th>
+                  <th style="width:95px">Price</th>
+                  <th style="width:105px">Cost</th>
+                  <th style="width:115px">Sold / day</th>
+                  <th style="width:100px;text-align:right">Margin</th>
+                </tr>
+              </thead>
+              <tbody id="menuBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="stack right">
+        <div class="card">
+          <div class="topline">
+            <div>
+              <h2 style="margin-bottom:2px">Monthly break-even summary</h2>
+              <p id="statusLine" class="small"></p>
+            </div>
+            <div id="profitBadge" class="badge">—</div>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <div class="label">Fixed + labor cost</div>
+              <div id="fixedTotal" class="value money">$0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Projected monthly revenue</div>
+              <div id="revenue" class="value money">$0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Break-even monthly revenue</div>
+              <div id="beRevenue" class="value money">$0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Break-even items / month</div>
+              <div id="beUnits" class="value num">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Break-even operating days</div>
+              <div id="beDays" class="value num">—</div>
+            </div>
+            <div class="metric">
+              <div class="label">Projected monthly profit</div>
+              <div id="profit" class="value money">$0</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px">
+            <div class="small" style="display:flex;justify-content:space-between;gap:10px">
+              <span>Progress to break-even</span>
+              <span id="progressText">0%</span>
+            </div>
+            <div class="progress"><span id="progressBar"></span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Break-even graph</h2>
+          <p class="small">Revenue vs. total monthly cost. Daily item quantities are multiplied by your operating days per month.</p>
+          <svg id="chart" viewBox="0 0 620 300" role="img" aria-label="Break-even chart"></svg>
+          <div class="legend">
+            <span class="rev">Revenue</span>
+            <span class="cost">Total cost</span>
+            <span class="be">Break-even</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Operating targets</h2>
+          <div class="targets">
+            <div class="target"><div class="k">Operating days / month</div><div id="opDays" class="v num"></div></div>
+            <div class="target"><div class="k">Current items / day</div><div id="unitsDay" class="v num"></div></div>
+            <div class="target"><div class="k">Break-even items / day</div><div id="beUnitsDay" class="v num"></div></div>
+            <div class="target"><div class="k">Break-even sales / day</div><div id="beSalesDay" class="v money"></div></div>
+            <div class="target"><div class="k">Average selling price / item</div><div id="avgPrice" class="v money"></div></div>
+            <div class="target"><div class="k">Average contribution / item</div><div id="avgMargin" class="v money"></div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+(() => {
+  const defaults = [
+    ["Masala Puri",10,4,10],
+    ["Churmuri",8,3,5],
+    ["Nippat Masala",8,4,5],
+    ["Congress Masala",8,4,5],
+    ["Cucumber Masala",8,3,5],
+    ["Shavige Bath with Chutney",10,4,8],
+    ["Set Dosa with Saagu & Chutney",10,5,10],
+    ["Onion Dosa with Saagu & Chutney",10,5,10],
+    ["Mysore Pak",2,1.5,5],
+    ["Filter Coffee",3,1.5,8],
+    ["Kokum",5,2,5],
+    ["Water Bottle",1,0.5,5]
+  ];
+
+  const menuBody = document.getElementById("menuBody");
+
+  const money = n => new Intl.NumberFormat("en-US", {
+    style:"currency", currency:"USD", maximumFractionDigits:0
+  }).format(Number.isFinite(n) ? n : 0);
+
+  const money2 = n => new Intl.NumberFormat("en-US", {
+    style:"currency", currency:"USD", minimumFractionDigits:2, maximumFractionDigits:2
+  }).format(Number.isFinite(n) ? n : 0);
+
+  const num = n => new Intl.NumberFormat("en-US", {
+    maximumFractionDigits:1
+  }).format(Number.isFinite(n) ? n : 0);
+
+  const val = id => Math.max(0, parseFloat(document.getElementById(id).value) || 0);
+
+  function buildRows(){
+    menuBody.innerHTML = "";
+    defaults.forEach((d,i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${d[0]}</strong></td>
+        <td><input aria-label="${d[0]} price" data-kind="price" data-i="${i}" type="number" min="0" step="0.25" value="${d[1]}"></td>
+        <td><input aria-label="${d[0]} cost" data-kind="cost" data-i="${i}" type="number" min="0" step="0.25" value="${d[2]}"></td>
+        <td><input aria-label="${d[0]} daily quantity" data-kind="qty" data-i="${i}" type="number" min="0" step="1" value="${d[3]}"></td>
+        <td data-margin="${i}" class="money" style="text-align:right"></td>`;
+      menuBody.appendChild(tr);
+    });
+  }
+
+  function getRows(){
+    return defaults.map((d,i) => {
+      const get = kind => Math.max(0, parseFloat(menuBody.querySelector(`[data-kind="${kind}"][data-i="${i}"]`).value) || 0);
+      return {name:d[0], price:get("price"), cost:get("cost"), qty:get("qty")};
+    });
+  }
+
+  function drawChart(avgPrice, avgCost, fixed, currentUnits, breakEvenUnits){
+    const svg = document.getElementById("chart");
+    const W=620,H=300,L=66,R=20,T=18,B=42,pw=W-L-R,ph=H-T-B;
+    const safeBE = Number.isFinite(breakEvenUnits) ? breakEvenUnits : 0;
+    const maxX = Math.max(100, safeBE*1.35, currentUnits*1.2);
+    const maxY = Math.max(100, fixed + maxX*avgCost, maxX*avgPrice) * 1.08;
+    const x = u => L + (u/maxX)*pw;
+    const y = v => T + ph - (v/maxY)*ph;
+
+    let s = "";
+
+    for(let i=0;i<=4;i++){
+      const yy = T + ph*i/4;
+      const value = maxY*(1-i/4);
+      s += `<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" class="gridline"/>`;
+      s += `<text x="${L-9}" y="${yy+4}" text-anchor="end" class="axistext">$${Math.round(value/1000)}k</text>`;
+    }
+    for(let i=0;i<=4;i++){
+      const xx = L + pw*i/4;
+      const units = maxX*i/4;
+      s += `<text x="${xx}" y="${H-18}" text-anchor="middle" class="axistext">${Math.round(units)}</text>`;
+    }
+
+    s += `<path d="M ${x(0)} ${y(0)} L ${x(maxX)} ${y(maxX*avgPrice)}" class="revline"/>`;
+    s += `<path d="M ${x(0)} ${y(fixed)} L ${x(maxX)} ${y(fixed + maxX*avgCost)}" class="costline"/>`;
+
+    if(Number.isFinite(breakEvenUnits) && breakEvenUnits <= maxX){
+      const bx=x(breakEvenUnits), by=y(breakEvenUnits*avgPrice);
+      s += `<line x1="${bx}" y1="${T}" x2="${bx}" y2="${T+ph}" class="beline"/>`;
+      s += `<circle cx="${bx}" cy="${by}" r="5" class="dot"/>`;
+      s += `<text x="${Math.min(W-115,bx+8)}" y="${Math.max(16,by-9)}" class="axistext">BE ${Math.ceil(breakEvenUnits)} items</text>`;
+    }
+
+    s += `<text x="${W/2}" y="${H-2}" text-anchor="middle" class="axistext">Items sold per month</text>`;
+    svg.innerHTML = s;
+  }
+
+  function calculate(){
+    const rows = getRows();
+
+    rows.forEach((r,i) => {
+      menuBody.querySelector(`[data-margin="${i}"]`).textContent = money2(r.price-r.cost);
+    });
+
+    const weeksPerMonth = 52/12;
+    const operatingDays = val("daysWeek") * weeksPerMonth;
+    const labor = val("workers") * val("wage") * val("hours") * operatingDays;
+    const fixed = val("truckRent") + val("spaceRent") + val("kitchen") + val("other") + labor;
+
+    const dailyUnits = rows.reduce((s,r) => s+r.qty, 0);
+    const units = dailyUnits * operatingDays;
+    const revenue = rows.reduce((s,r) => s+r.price*r.qty, 0) * operatingDays;
+    const variable = rows.reduce((s,r) => s+r.cost*r.qty, 0) * operatingDays;
+    const contribution = revenue-variable;
+
+    const avgPrice = units ? revenue/units : 0;
+    const avgCost = units ? variable/units : 0;
+    const avgMargin = avgPrice-avgCost;
+
+    const breakEvenUnits = avgMargin > 0 ? fixed/avgMargin : Infinity;
+    const breakEvenRevenue = Number.isFinite(breakEvenUnits) ? breakEvenUnits*avgPrice : Infinity;
+
+    const dailyContribution = operatingDays > 0 ? contribution/operatingDays : 0;
+    const breakEvenDays = dailyContribution > 0 ? fixed/dailyContribution : Infinity;
+    const profit = contribution-fixed;
+
+    const breakEvenUnitsDay = operatingDays > 0 && Number.isFinite(breakEvenUnits) ? breakEvenUnits/operatingDays : Infinity;
+    const breakEvenSalesDay = operatingDays > 0 && Number.isFinite(breakEvenRevenue) ? breakEvenRevenue/operatingDays : Infinity;
+    const progress = Number.isFinite(breakEvenUnits) && breakEvenUnits > 0 ? Math.min(100,(units/breakEvenUnits)*100) : 0;
+
+    document.getElementById("fixedTotal").textContent = money(fixed);
+    document.getElementById("revenue").textContent = money(revenue);
+    document.getElementById("beRevenue").textContent = Number.isFinite(breakEvenRevenue) ? money(breakEvenRevenue) : "Not reachable";
+    document.getElementById("beUnits").textContent = Number.isFinite(breakEvenUnits) ? Math.ceil(breakEvenUnits).toLocaleString() : "Not reachable";
+    document.getElementById("beDays").textContent = Number.isFinite(breakEvenDays) ? `${num(breakEvenDays)} days` : "—";
+    document.getElementById("profit").textContent = money(profit);
+    document.getElementById("opDays").textContent = `${num(operatingDays)} days`;
+    document.getElementById("unitsDay").textContent = num(dailyUnits);
+    document.getElementById("beUnitsDay").textContent = Number.isFinite(breakEvenUnitsDay) ? num(breakEvenUnitsDay) : "—";
+    document.getElementById("beSalesDay").textContent = Number.isFinite(breakEvenSalesDay) ? money(breakEvenSalesDay) : "—";
+    document.getElementById("avgPrice").textContent = money2(avgPrice);
+    document.getElementById("avgMargin").textContent = money2(avgMargin);
+
+    document.getElementById("progressText").textContent = `${Math.round(progress)}%`;
+    document.getElementById("progressBar").style.width = `${progress}%`;
+
+    const badge = document.getElementById("profitBadge");
+    badge.className = `badge ${profit >= 0 ? "good" : "bad"}`;
+    badge.textContent = profit >= 0 ? "Profitable" : "Below break-even";
+
+    const status = document.getElementById("statusLine");
+    if(avgMargin <= 0){
+      status.textContent = "Current sales mix has no positive contribution margin. Raise prices or lower item costs.";
+    } else if(profit >= 0){
+      status.textContent = `At this sales mix you are ${money(profit)} above break-even for the month.`;
+    } else {
+      status.textContent = `You need about ${Math.max(0,Math.ceil(breakEvenUnits-units)).toLocaleString()} more items at the same sales mix.`;
+    }
+
+    drawChart(avgPrice,avgCost,fixed,units,breakEvenUnits);
+  }
+
+  buildRows();
+  document.addEventListener("input", e => {
+    if(e.target.matches('input[type="number"]')) calculate();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    const fixedDefaults = {
+      truckRent:2500, spaceRent:2500, kitchen:500, other:1000,
+      workers:2, wage:10, hours:4, daysWeek:6
+    };
+    for(const [id,value] of Object.entries(fixedDefaults)){
+      document.getElementById(id).value = value;
+    }
+    buildRows();
+    calculate();
+  });
+
+  calculate();
+})();
+</script>
+</body>
+</html>
